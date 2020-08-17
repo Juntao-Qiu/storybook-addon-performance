@@ -169,6 +169,35 @@ As seen above, the plugin exports two type definitions to assist with creating y
 - `PublicInteractionTask`: defines the object structure for an interaction task; pass an array of these tasks as a parameter to storybook, as shown above.
 - `InteractionTaskArgs`: the arguments for an interaction task's `run` function
 
+## Usage: Filtering task groups
+
+Some components are not designed to work in server side rendering, or on the client. To support this we have created a _allowlist_ that you can optionally pass in to only allow the groups to run that you want to. To configure this option, set the `allowedGroups` option as part of a story's parameters.
+
+- Default value: `['server', 'client']` (run everything)
+
+```js
+// Using [Component Story Format (CSF)](https://storybook.js.org/docs/formats/component-story-format/)
+export const onlyClient = () => <p>A story only measuring client-side performance 👩‍💻</p>;
+
+onlyClient.story = {
+  parameters: {
+    performance: {
+      allowedGroups: ['client'],
+    },
+  },
+};
+
+export const onlyServer = () => <p>A story only measuring server-side performance ‍☁️</p>;
+
+onlyServer.story = {
+  parameters: {
+    performance: {
+      allowedGroups: ['server'],
+    },
+  },
+};
+```
+
 ## Local addon development
 
 ```bash

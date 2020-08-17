@@ -1,15 +1,21 @@
 import { Channel } from '@storybook/channels';
 import { styled } from '@storybook/theming';
 import React, { useMemo } from 'react';
-import { getInteractionGroup } from '../tasks/get-interaction-group';
-import preset from '../tasks/preset';
-import { Nullable, PublicInteractionTask, TaskGroup, TaskGroupResult } from '../types';
+import { panelId } from '../selectors';
+import { getGroups } from '../tasks/get-groups';
+import {
+  AllowedGroup,
+  Nullable,
+  PublicInteractionTask,
+  TaskGroup,
+  TaskGroupResult,
+} from '../types';
 import machine, { RunContext } from './machine';
 import ServiceContext from './service-context';
 import TaskGroupPanel from './task-group';
 import Topbar from './top-bar';
 import usePanelMachine from './use-panel-machine';
-import { panelId } from '../selectors';
+import flatten from '../util/flatten';
 
 const Container = styled.div`
   --grid: 10px;
@@ -38,30 +44,21 @@ function findResult(group: TaskGroup, context: Nullable<RunContext>): Nullable<T
   return result || null;
 }
 
-function getResult(group: TaskGroup, context: RunContext): TaskGroupResult {
-  const result: Nullable<TaskGroupResult> = findResult(group, context);
-  // Cannot use invariant as we are not at a high enough typescript version
-  if (!result) {
-    throw new Error(`Could not find group(${group.groupId}) in result`);
-  }
-  return result;
-}
-
 export default function Panel({
   channel,
   interactions,
+  allowedGroups,
 }: {
   channel: Channel;
   interactions: PublicInteractionTask[];
+  allowedGroups: AllowedGroup[];
 }) {
   const { state, service } = usePanelMachine(machine, channel);
 
-  const groups: TaskGroup[] = useMemo(
-    function merge() {
-      return [...preset, getInteractionGroup(interactions)];
-    },
-    [interactions],
-  );
+  const groups: TaskGroup[] = useMemo(() => getGroups({ allowedGroups, interactions }), [
+    interactions,
+    allowedGroups,
+  ]);
 
   return (
     <ServiceContext.Provider value={service}>
@@ -76,7 +73,7 @@ export default function Panel({
               <TaskGroupPanel
                 key={group.groupId}
                 group={group}
-                result={getResult(group, state.context.current)}
+                result={findResult(group, state.context.current)}
                 pinned={findResult(group, state.context.pinned)}
               />
             );

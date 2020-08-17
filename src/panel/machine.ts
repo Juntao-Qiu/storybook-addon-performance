@@ -5,7 +5,7 @@ export type MachineEvents =
   | { type: 'WAIT' }
   | { type: 'LOADED'; storyName: string; pinned: Nullable<RunContext> }
   | { type: 'START_ALL' }
-  | { type: 'START_ONE'; taskId: string }
+  | { type: 'START_ONE'; taskName: string }
   | { type: 'FINISH'; results: TaskGroupResult[] }
   | { type: 'PIN' }
   | { type: 'UNPIN' }
@@ -27,11 +27,11 @@ export type MachineContext = {
 
 export type MachineSchema = {
   states: {
-    waiting: {};
+    waiting: Record<string, any>;
     active: {
       states: {
-        idle: {};
-        running: {};
+        idle: Record<string, any>;
+        running: Record<string, any>;
       };
     };
   };

@@ -12,24 +12,30 @@ import {
   TaskGroup,
   TaskMap,
   ErrorResult,
+  AllowedGroup,
 } from '../types';
 import getElement from '../task-runner/get-element';
 import { bindAll } from '../util/bind-channel-events';
 import preset from '../tasks/preset';
 import getTaskMap from '../tasks/get-tasks-map';
+import { getGroups } from '../tasks/get-groups';
 
 type Props = {
   getNode: () => React.ReactNode;
   channel: Channel;
-  interactions: PublicInteractionTask[] | undefined;
+  interactions: PublicInteractionTask[];
+  allowedGroups: AllowedGroup[];
 };
 
-export default function TaskHarness({ getNode, channel, interactions = [] }: Props) {
+export default function TaskHarness({ getNode, channel, interactions, allowedGroups }: Props) {
   const groups: TaskGroup[] = useMemo(
     function merge() {
-      return [...preset, getInteractionGroup(interactions)];
+      return getGroups({
+        allowedGroups,
+        interactions: interactions,
+      });
     },
-    [interactions],
+    [interactions, allowedGroups],
   );
   const tasks: TaskMap = useMemo(() => getTaskMap(groups), [groups]);
 
@@ -60,10 +66,10 @@ export default function TaskHarness({ getNode, channel, interactions = [] }: Pro
         },
         {
           eventName: eventNames.START_ONE,
-          fn: async function onStartOne({ taskId, copies, samples }: RunOne['Params']) {
-            const task = tasks[taskId];
+          fn: async function onStartOne({ taskName, copies, samples }: RunOne['Params']) {
+            const task = tasks[taskName];
             if (task == null) {
-              throw new Error(`Could not find task with id: ${taskId}`);
+              throw new Error(`Could not find task with id: ${taskName}`);
             }
 
             if (task.type === 'timed' || task.type === 'interaction') {
@@ -73,7 +79,7 @@ export default function TaskHarness({ getNode, channel, interactions = [] }: Pro
                 samples,
                 copies,
               });
-              safeEmit(eventNames.FINISH_ONE, { taskId, result });
+              safeEmit(eventNames.FINISH_ONE, { taskName, result });
               return;
             }
             if (task.type === 'static') {
@@ -82,7 +88,7 @@ export default function TaskHarness({ getNode, channel, interactions = [] }: Pro
                 getNode,
                 copies,
               });
-              safeEmit(eventNames.FINISH_ONE, { taskId, result });
+              safeEmit(eventNames.FINISH_ONE, { taskName, result });
               return;
             }
           },

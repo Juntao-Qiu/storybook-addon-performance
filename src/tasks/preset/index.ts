@@ -1,7 +1,6 @@
-import serverSide from './server-side';
-import initialMount from './client';
+import server from './server';
+import client from './client';
 import { TaskGroup } from '../../types';
 
-const preset: TaskGroup[] = [serverSide, initialMount];
-
+const preset: TaskGroup[] = [server, client];
 export default preset;
